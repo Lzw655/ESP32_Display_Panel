@@ -1,0 +1,32 @@
+name: Build Test Application
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        idf_ver: ["v4.4.5"]
+        sdkconfig_defaults:
+          [
+            "sdkconfig.defaults.esp32_c3_lcdkit",
+            "sdkconfig.defaults.esp32_s3_box",
+          ]
+    runs-on: ubuntu-20.04
+    container: espressif/idf:${{ matrix.idf_ver }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build ESP_IOExpander Test Application
+        env:
+          SDKCONFIG_DEFAULTS: ${{ matrix.sdkconfig_defaults }}
+        working-directory: test_apps
+        shell: bash
+        run: |
+          . ${IDF_PATH}/export.sh
+          export PEDANTIC_FLAGS="-DIDF_CI_BUILD -Werror -Werror=deprecated-declarations -Werror=unused-variable -Werror=unused-but-set-variable -Werror=unused-function"
+          export EXTRA_CFLAGS="${PEDANTIC_FLAGS} -Wstrict-prototypes"
+          export EXTRA_CXXFLAGS="${PEDANTIC_FLAGS}"
+          cat ${SDKCONFIG_DEFAULTS} > sdkconfig.defaults
+          idf.py build
