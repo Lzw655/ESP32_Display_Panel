@@ -21,7 +21,7 @@ The following table shows the versions of dependent libraries for ESP32_Display_
 
 | **ESP32_Display_Panel** | **Arduino-ESP32** | **ESP-IDF** | **ESP32_IO_Expander** |
 | :---------------------: | :---------------: | :---------: | :-------------------: |
-|         v1.0.0          |     >= v2.0.9     |  == v4.4.5  |       >= v1.0.1       |
+|         v1.x.x          |     >= v2.0.9     |  == v4.4.5  |       >= v1.1.0       |
 
 ## Use with Arduino IDE
 
@@ -254,6 +254,9 @@ if(touched) {
 panel->getBacklight()->on();
 panel->getBacklight()->off();
 panel->getBacklight()->setBrightness(50);
+
+// Release the ESP_Panel object
+delete panel;
 ```
 
 ## Supported Boards

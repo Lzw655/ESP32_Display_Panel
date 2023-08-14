@@ -8,3 +8,9 @@
 * Supports various Espressif official development boards
 * Supports custom boards
 * Supports multiple types of drivers, including **Bus**, **LCD**, **Touch**, **Backlight**
+
+## V1.1.0 - 2023-08-14
+
+### Fixed:
+
+* Change library name to `ESP32_Display_Panel`

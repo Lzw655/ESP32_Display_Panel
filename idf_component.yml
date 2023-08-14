@@ -1,8 +1,8 @@
-version: "1.0.0"
+version: "1.1.0"
 description: ESP32 Display Panel Driver which encapsulates various components using C++
 url: https://github.com/Lzw655/ESP32_Display_Panel
 dependencies:
   idf: "==4.4.5"
   lzw655/esp32_io_expander:
-      version: "^1"
+      version: ">=1.1.0"
       public: true
