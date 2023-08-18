@@ -13,6 +13,12 @@ jobs:
           [
             "sdkconfig.defaults.esp32_c3_lcdkit",
             "sdkconfig.defaults.esp32_s3_box",
+            "sdkconfig.defaults.esp32_s3_box_lite",
+            "sdkconfig.defaults.esp32_s3_eye",
+            "sdkconfig.defaults.esp32_s3_korvo_2",
+            "sdkconfig.defaults.esp32_s3_lcd_ev_board",
+            "sdkconfig.defaults.esp32_s3_lcd_ev_board_2",
+            "sdkconfig.defaults.esp32_s3_otg",
           ]
     runs-on: ubuntu-20.04
     container: espressif/idf:${{ matrix.idf_ver }}
