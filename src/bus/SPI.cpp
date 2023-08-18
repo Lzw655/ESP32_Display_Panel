@@ -48,14 +48,14 @@ ESP_PanelBus_SPI::ESP_PanelBus_SPI(const esp_lcd_panel_io_spi_config_t *io_confi
 ESP_PanelBus_SPI::ESP_PanelBus_SPI(int cs, int dc, int clk, int mosi, int miso):
     host_id(SPI_HOST_ID_DEFAULT),
     host_config((spi_bus_config_t)SPI_HOST_CONFIG_DEFAULT(clk, mosi, miso)),
-    io_config((esp_lcd_panel_io_spi_config_t)SPI_PANEL_IO_CONFIG_DEFAULT(cs, dc))
+    io_config((esp_lcd_panel_io_spi_config_t)SPI_PANEL_IO_CONFIG_DEFAULT(cs, dc, callback, &ctx))
 {
     flags.host_need_init = true;
 }
 
 ESP_PanelBus_SPI::ESP_PanelBus_SPI(int cs, int dc):
     host_id(SPI_HOST_ID_DEFAULT),
-    io_config((esp_lcd_panel_io_spi_config_t)SPI_PANEL_IO_CONFIG_DEFAULT(cs, dc))
+    io_config((esp_lcd_panel_io_spi_config_t)SPI_PANEL_IO_CONFIG_DEFAULT(cs, dc, callback, &ctx))
 {
     flags.host_need_init = false;
 }
