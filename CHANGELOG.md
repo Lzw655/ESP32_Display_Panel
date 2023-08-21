@@ -20,3 +20,4 @@
 ### Fixed:
 
 * Remove "hal/spi_ll.h" from header
+* Fix missing IO control for ESP32_S3_LCD_EV_BOARD

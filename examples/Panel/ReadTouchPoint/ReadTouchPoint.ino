@@ -86,6 +86,9 @@ void setup()
     expander->begin();
     /* Add into panel for 3-wire SPI */
     panel->addIOExpander(expander);
+    /* For the newest version sub board, need to set `ESP_PANEL_LCD_RGB_IO_VSYNC` to low before initialize LCD */
+    pinMode(ESP_PANEL_LCD_RGB_IO_VSYNC, OUTPUT);
+    digitalWrite(ESP_PANEL_LCD_RGB_IO_VSYNC, HIGH);
 #endif
 
     /* There are some extral initialization for ESP32-S3-Korvo-2 */
