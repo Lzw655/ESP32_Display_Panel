@@ -181,36 +181,28 @@ void ShowClcok_cb(lv_event_t * e)
 
     lv_port_lock(0);
 
-    lv_obj_t *src = lv_obj_create(lv_scr_act());
-    lv_obj_set_size(src, lv_obj_get_width(lv_obj_get_parent(src)), 150);
-    lv_obj_set_style_radius(src, 0, LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_img_src(src, &ui_img_mfnlbodele_small_png, LV_PART_MAIN);
-    lv_obj_set_style_border_width(src, 0, LV_PART_MAIN);
-    lv_obj_set_style_shadow_width(src, 0, LV_PART_MAIN);
-    lv_obj_align(src, LV_ALIGN_CENTER, 0, 0); 
-
-    lv_obj_t *lab_time = lv_label_create(src);
+    lv_obj_t *lab_time = lv_label_create(lv_scr_act());
     lv_obj_set_style_text_font(lab_time, &ui_font_FontNumber48bp4, LV_PART_MAIN);
     lv_label_set_text_static(lab_time, "23:59");
-    lv_obj_align(lab_time, LV_ALIGN_CENTER, 0, -20);
+    lv_obj_align(lab_time, LV_ALIGN_CENTER, 0, -40);
     lv_obj_set_style_bg_opa(lab_time, LV_OPA_TRANSP, LV_PART_MAIN);
     lv_obj_set_style_text_color(lab_time, lv_color_make(196, 191, 191), LV_PART_MAIN);
     lv_timer_t *timer = lv_timer_create(clock_run_cb, 1000, (void *) lab_time);
     clock_run_cb(timer);
 
-    lv_obj_t *lab_calendar = lv_label_create(src);
+    lv_obj_t *lab_calendar = lv_label_create(lv_scr_act());
     lv_obj_set_style_text_font(lab_calendar, &ui_font_FontNumber28bp4, LV_PART_MAIN);
     lv_label_set_text_static(lab_calendar, "2023-01-01");
-    lv_obj_align(lab_calendar, LV_ALIGN_BOTTOM_LEFT, 0, 10);
+    lv_obj_align(lab_calendar, LV_ALIGN_BOTTOM_LEFT, 20, -50);
     lv_obj_set_style_bg_opa(lab_calendar, LV_OPA_TRANSP, LV_PART_MAIN);
     lv_obj_set_style_text_color(lab_calendar, lv_color_make(196, 191, 191), LV_PART_MAIN);
     lv_timer_t *timer_cal = lv_timer_create(calendar_run_cb, 1000, (void *) lab_calendar);
     calendar_run_cb(timer_cal);
 
-    lv_obj_t *lab_week = lv_label_create(src);
+    lv_obj_t *lab_week = lv_label_create(lv_scr_act());
     lv_obj_set_style_text_font(lab_week, &ui_font_FontNumber28bp4, LV_PART_MAIN);
     lv_label_set_text_static(lab_week, "星期一");
-    lv_obj_align(lab_week, LV_ALIGN_BOTTOM_RIGHT, 0, 10);
+    lv_obj_align(lab_week, LV_ALIGN_BOTTOM_RIGHT, -20, -50);
     lv_obj_set_style_bg_opa(lab_week, LV_OPA_TRANSP, LV_PART_MAIN);
     lv_obj_set_style_text_color(lab_week, lv_color_make(196, 191, 191), LV_PART_MAIN);
     lv_timer_t *timer_week = lv_timer_create(week_run_cb, 1000, (void *) lab_week);
@@ -334,22 +326,14 @@ void loop()
         Serial.println("Wifi list show:");
         lv_port_lock(0);
 
-        lv_obj_t *src = lv_obj_create(lv_scr_act());
-        lv_obj_set_size(src, lv_obj_get_width(lv_obj_get_parent(src)), 180);
-        lv_obj_set_style_radius(src, 0, LV_STATE_DEFAULT);
-        lv_obj_set_style_bg_color(src, lv_obj_get_style_bg_color(lv_scr_act(), LV_STATE_DEFAULT), LV_PART_MAIN);
-        lv_obj_set_style_border_width(src, 0, LV_PART_MAIN);
-        lv_obj_set_style_shadow_width(src, 0, LV_PART_MAIN);
-        lv_obj_align(src, LV_ALIGN_CENTER, 0, 20); 
-
-        wifiListView = lv_list_create(src);
-        lv_obj_set_size(wifiListView, lv_obj_get_width(lv_obj_get_parent(src)), 180);
+        wifiListView = lv_list_create(lv_scr_act());
+        lv_obj_set_size(wifiListView, 300, 190);
         for (int i = 0; i < num_wifi; i++) {
             lv_obj_t *wifiListItem = lv_list_add_btn(wifiListView, NULL, WiFi.SSID(i).c_str());
             lv_obj_set_user_data(wifiListItem, (void *)WiFi.SSID(i).c_str());
             lv_obj_add_event_cb(wifiListItem, wifiListClicked_cb, LV_EVENT_ALL, NULL);
         }
-        lv_obj_align(wifiListView, LV_ALIGN_CENTER, 0, 0);
+        lv_obj_align(wifiListView, LV_ALIGN_CENTER, 0, 20);
 
         lv_port_unlock();
     }
