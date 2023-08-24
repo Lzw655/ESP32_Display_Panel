@@ -46,6 +46,12 @@ TEST_CASE("test draw lcd", "[panel][lcd]")
     expander->begin();
     /* Add into panel for 3-wire SPI */
     panel->addIOExpander(expander);
+    /* For the newest version sub board, need to set `ESP_PANEL_LCD_RGB_IO_VSYNC` to high before initialize LCD */
+    gpio_config_t io_conf = {};
+    io_conf.pin_bit_mask = BIT64(ESP_PANEL_LCD_RGB_IO_VSYNC);
+    io_conf.mode = GPIO_MODE_OUTPUT;
+    gpio_config(&io_conf);
+    gpio_set_level((gpio_num_t)ESP_PANEL_LCD_RGB_IO_VSYNC, 1);
 #endif
 
     /* There are some extral initialization for ESP32-S3-Korvo-2 */
@@ -129,6 +135,12 @@ TEST_CASE("test read touch", "[panel][touch]")
     expander->begin();
     /* Add into panel for 3-wire SPI */
     panel->addIOExpander(expander);
+    /* For the newest version sub board, need to set `ESP_PANEL_LCD_RGB_IO_VSYNC` to high before initialize LCD */
+    gpio_config_t io_conf = {};
+    io_conf.pin_bit_mask = BIT64(ESP_PANEL_LCD_RGB_IO_VSYNC);
+    io_conf.mode = GPIO_MODE_OUTPUT;
+    gpio_config(&io_conf);
+    gpio_set_level((gpio_num_t)ESP_PANEL_LCD_RGB_IO_VSYNC, 1);
 #endif
 
     /* There are some extral initialization for ESP32-S3-Korvo-2 */

@@ -60,7 +60,7 @@ void ESP_Panel::init(void)
         .sclk_io_num = ESP_PANEL_LCD_SPI_IO_SCK,
         .quadwp_io_num = GPIO_NUM_NC,
         .quadhd_io_num = GPIO_NUM_NC,
-        .max_transfer_sz = SPI_LL_DATA_MAX_BIT_LEN >> 3,
+        .max_transfer_sz = SPI_MAX_TRANSFER_SIZE,
     };
 #endif /* ESP_PANEL_LCD_BUS_SKIP_INIT_HOST */
     esp_lcd_panel_io_spi_config_t lcd_panel_io_cfg = {
@@ -181,7 +181,7 @@ void ESP_Panel::init(void)
         .sclk_io_num = ESP_PANEL_LCD_TOUCH_SPI_IO_SCK,
         .quadwp_io_num = GPIO_NUM_NC,
         .quadhd_io_num = GPIO_NUM_NC,
-        .max_transfer_sz = SPI_LL_DATA_MAX_BIT_LEN >> 3,
+        .max_transfer_sz = SPI_MAX_TRANSFER_SIZE,
     };
 #endif /* ESP_PANEL_LCD_TOUCH_BUS_SKIP_INIT_HOST */
     esp_lcd_panel_io_spi_config_t lcd_touch_panel_io_cfg = LCD_TOUCH_PANEL_IO_SPI_CONFIG(ESP_PANEL_LCD_TOUCH_NAME, ESP_PANEL_LCD_TOUCH_SPI_IO_CS);

@@ -13,13 +13,15 @@
 
 #include "../ESP_PanelBus.h"
 
-#ifdef __cplusplus
-#define need_redefine_cplusplus __cplusplus
-#undef __cplusplus
-#endif
-#include "hal/spi_ll.h"
-#ifdef need_redefine_cplusplus
-#define __cplusplus need_redefine_cplusplus
+/* Refer to `hal/spi_ll.h` */
+#ifdef CONFIG_IDF_TARGET_ESP32
+#define SPI_MAX_TRANSFER_SIZE   ((1 << 24) >> 3)
+#elif CONFIG_IDF_TARGET_ESP32S2
+#define SPI_MAX_TRANSFER_SIZE   ((1 << 23) >> 3)
+#elif CONFIG_IDF_TARGET_ESP32S3
+#define SPI_MAX_TRANSFER_SIZE   ((1 << 18) >> 3)
+#elif CONFIG_IDF_TARGET_ESP32C3
+#define SPI_MAX_TRANSFER_SIZE   ((1 << 18) >> 3)
 #endif
 
 #define SPI_HOST_ID_DEFAULT         (SPI2_HOST)
@@ -30,17 +32,17 @@
         .sclk_io_num = clk,                                     \
         .quadwp_io_num = GPIO_NUM_NC,                           \
         .quadhd_io_num = GPIO_NUM_NC,                           \
-        .max_transfer_sz = SPI_LL_DATA_MAX_BIT_LEN >> 3,        \
+        .max_transfer_sz = SPI_MAX_TRANSFER_SIZE,               \
     }
-#define SPI_PANEL_IO_CONFIG_DEFAULT(cs, dc)                     \
+#define SPI_PANEL_IO_CONFIG_DEFAULT(cs, dc, cb, cb_ctx)         \
     {                                                           \
         .cs_gpio_num = cs,                                      \
         .dc_gpio_num = dc,                                      \
         .spi_mode = 0,                                          \
         .pclk_hz = SPI_MASTER_FREQ_40M,                         \
         .trans_queue_depth = 10,                                \
-        .on_color_trans_done = (esp_lcd_panel_io_color_trans_done_cb_t)callback, \
-        .user_ctx = &this->ctx,                                 \
+        .on_color_trans_done = (esp_lcd_panel_io_color_trans_done_cb_t)cb, \
+        .user_ctx = cb_ctx,                                     \
         .lcd_cmd_bits = 8,                                      \
         .lcd_param_bits = 8,                                    \
     }

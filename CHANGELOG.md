@@ -14,3 +14,10 @@
 ### Fixed:
 
 * Change library name to `ESP32_Display_Panel`
+
+## V1.1.1 - 2023-08-18
+
+### Fixed:
+
+* Remove "hal/spi_ll.h" from header
+* Fix missing IO control for ESP32_S3_LCD_EV_BOARD

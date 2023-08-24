@@ -1,4 +1,4 @@
-version: "1.1.0"
+version: "1.1.1"
 description: ESP32 Display Panel Driver which encapsulates various components using C++
 url: https://github.com/Lzw655/ESP32_Display_Panel
 dependencies:
