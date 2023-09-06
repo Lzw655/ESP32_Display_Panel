@@ -1,117 +1,56 @@
-/**
- * The example demonstrates how to port LVGL.
- *
- * ## How to Use
- *
- * To use this example, you need to install `ESP32_Display_Panel` (includes its dependent libraries) and `LVGL(v8.3.x)` library first,
- * then follow the steps to configure:
- *
- * ### Configure ESP32_Display_Panel
- *
- *      1. Go to the directory of the installed Arduino libraries.
- *      2. Go to the `ESP32_Display_Panel` folder, copy `ESP_Panel_Conf_Template.h` and place it out of `ESP32_Display_Panel` folder.
- *         It should be at the same level as the `ESP32_Display_Panel` folder. Then rename it as `ESP_Panel_Conf.h`.
- *         Finally, the layout of the Arduino Libraries folder with `ESP_Panel_Conf.h` should look like this:
- *          ```
- *          arduino
- *              |-libraries
- *                  |-ESP32_Display_Panel
- *                  |-other_lib_1
- *                  |-other_lib_2
- *                  |-ESP_Panel_Conf.h
- *          ```
- *      3. Open `ESP_Panel_Conf.h` and uncomment one of the following macros to select an supported development board.
- *         Taking `ESP32_S3_BOX` as an example:
- *          ```c
- *          // #define ESP_PANEL_BOARD_ESP32_C3_LCDKIT
- *          #define ESP_PANEL_BOARD_ESP32_S3_BOX
- *          // #define ESP_PANEL_BOARD_ESP32_S3_BOX_LITE
- *          ...
- *          ```
- *
- * ### Configure LVGL
- *
- *      1. Go to the directory of the installed Arduino libraries
- *      2. Go to the `lvgl` folder, copy `lv_conf_template.h` and place it out of `lvgl` folder.
- *         It should be at the same level as the `lvgl` folder. Then rename it as `lv_conf.h`.
- *         Finally, the layout of the Arduino Libraries folder with `lv_conf.h` should look like this:
- *          ```
- *          arduino
- *              |-libraries
- *                  |-lvgl
- *                  |-other_lib_1
- *                  |-other_lib_2
- *                  |-lv_conf.h
- *          ```
- *      3. Open `lv_conf.h` and change the first `#if 0` to `#if 1` to enable the content of the file.
- *      4. Set the following configurations:
- *          ```c
- *          #define LV_COLOR_DEPTH          16
- *          #define LV_COLOR_16_SWAP        1   // This configuration is not for RGB LCD.
- *                                              // Don't set it if using ESP32-S3-LCD-Ev-Board or ESP32-S3-LCD-Ev-Board-2
- *          #define LV_MEM_CUSTOM           1
- *          #define LV_MEMCPY_MEMSET_STD    1
- *          #define LV_TICK_CUSTOM          1
- *          #define LV_FONT_MONTSERRAT_12   1
- *          #define LV_FONT_MONTSERRAT_16   1
- *          #define LV_USE_DEMO_WIDGETS     1
- *          #define LV_USE_DEMO_BENCHMARK   1
- *          #define LV_USE_DEMO_STRESS      1
- *          #define LV_USE_DEMO_MUSIC       1
- *          ```
- *
- * ### Configure Board
- *
- * Below are recommended configurations for developing GUI applications on various development boards.
- * These settings can be adjusted based on specific requirements. Go to the `Tools` in Arduino IDE to configure the following settings:
- *
- * |    Supported Boards     |  Selected Board:   |  PSRAM:  | Flash Mode: | Flash Size: | USB CDC On Boot: |    Partition Scheme:    | Core Debug Level: |
- * | :---------------------: | :----------------: | :------: | :---------: | :---------: | :--------------: | :---------------------: | :---------------: |
- * |     ESP32-C3-LCDkit     | ESP32C3 Dev Module | Disabled |     QIO     | 4MB (32Mb)  |     Enabled      | Default 4MB with spiffs |       Info        |
- * |      ESP32-S3-Box       |    ESP32-S3-Box    |    -     |      -      |      -      |        -         |     16M Flash (3MB)     |       Info        |
- * |    ESP32-S3-Box-Lite    |    ESP32-S3-Box    |    -     |      -      |      -      |        -         |     16M Flash (3MB)     |       Info        |
- * |      ESP32-S3-EYE       | ESP32S3 Dev Module |   OPI    |  QIO 80MHz  |     8MB     |     Enabled      |     8M with spiffs      |       Info        |
- * |    ESP32-S3-Korvo-2     | ESP32S3 Dev Module |   OPI    |  QIO 80MHz  |    16MB     |     Disabled     |     16M Flash (3MB)     |       Info        |
- * |  ESP32-S3-LCD-EV-Board  | ESP32S3 Dev Module |   OPI    |  QIO 80MHz  |    16MB     |  **See Note 1**  |     16M Flash (3MB)     |       Info        |
- * | ESP32-S3-LCD-EV-Board-2 | ESP32S3 Dev Module |   OPI    |  QIO 80MHz  |    16MB     |  **See Note 1**  |     16M Flash (3MB)     |       Info        |
- * |    ESP32-S3-USB-OTG     |  ESP32-S3-USB-OTG  |    -     |      -      |      -      |        -         |     8M with spiffs      |       Info        |
- *
- * **Note:**
- *      1. "USB CDC On Boot" should be enabled according to the using port:
- *          * Disable it if using **UART port**, enable it if using **USB port**.
- *          * If it is different in the previous flashing, should enable `Erase All Flash Before Sketch Upload` first, then disable it after flashing.
- *
- * ## Example Output
- *
- * ```bash
- * ...
- * Hello LVGL! V8.3.8
- * I am ESP32_Display_Panel.
- * Setup done
- * Loop
- * Loop
- * Loop
- * Loop
- * ...
- * ```
- */
-
 #include <Arduino.h>
 #include <lvgl.h>
 #include <ESP_Panel_Library.h>
 #include <ESP_IOExpander_Library.h>
+#include <NTPClient.h>
+#include <WiFiUdp.h>
+#include <WiFi.h>
+#include <ui.h>
+#include <ArduinoJson.h>
+#include <HTTPClient.h>
+#include "../../ui/src/ui_events.h"
 
-/**
-/* To use the built-in examples and demos of LVGL uncomment the includes below respectively.
- * You also need to copy `lvgl/examples` to `lvgl/src/examples`. Similarly for the demos `lvgl/demos` to `lvgl/src/demos`.
- */
-// #include <demos/lv_demos.h>
-// #include <examples/lv_examples.h>
 
 #define LV_BUF_SIZE     (ESP_PANEL_LCD_H_RES * 20)
 
 ESP_Panel *panel = NULL;
 SemaphoreHandle_t lvgl_mux = NULL;                  // LVGL mutex
+
+extern bool WifiConnected_Flag;
+extern bool WifiList_switch;
+
+static char hours_rol[10];
+static char min_rol[10];
+static char sec_rol[10];
+
+static char AlarmTime[30]; 
+
+lv_obj_t * Wifi_List = NULL;
+
+static int Connected_Count = 0;
+static int WeatherRefresh_Count = 0;
+
+static const char *SelectedWifiName = NULL;
+static const char *WifiPassword = NULL;
+
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP, "ntp6.aliyun.com", 28800, 60000);
+
+HTTPClient http;
+
+String API = "SqXvU5BorXASbNWsT";    //填写：心知天气密钥
+String CITY = "上海";                 //填写：所在城市
+String url_xinzhi = "";
+String WeatherURL = "";
+String Weather = "";
+String PreWeather = "";             
+int temperature = 999;
+char temperature_buffer[20];
+
+static char dateString[20];
+static int Num_Wifi = 0;
+
+bool Passwordvalid_flag = false;
 
 #if ESP_PANEL_LCD_BUS_TYPE == ESP_PANEL_BUS_TYPE_RGB
 /* Display flushing */
@@ -178,15 +117,193 @@ void lvgl_task(void *pvParameter)
     }
 }
 
+String GitURL(String api,String city)
+{
+  url_xinzhi =  "https://api.seniverse.com/v3/weather/now.json?key=";
+  url_xinzhi += api;
+  url_xinzhi += "&location=";
+  url_xinzhi += city;
+  url_xinzhi += "&language=zh-Hans&unit=c";
+  return url_xinzhi;
+}
+
+void ParseWeather(String url)
+{  
+  DynamicJsonDocument doc(1024); //分配内存,动态
+
+  http.begin(url);
+ 
+  int httpGet = http.GET();
+  if(httpGet > 0)
+  { 
+    if(httpGet == HTTP_CODE_OK) {
+      String json = http.getString();
+      deserializeJson(doc, json);
+      
+      Weather = doc["results"][0]["now"]["text"].as<String>();   //天气
+      temperature = doc["results"][0]["now"]["temperature"].as<int>();
+      
+      Serial.printf("Weather: %s\n", Weather);
+      Serial.printf("temperature: %d\n", temperature);
+    } else {
+      Serial.printf("ERROR: HTTP_CODE");
+    }
+  } else {
+    Serial.printf("ERROR: httpGet");
+  }
+
+  http.end();
+}
+
+void WifiClock_run_cb(lv_timer_t *timer)
+{
+    if(WifiConnected_Flag == true) {
+        lv_port_lock(0);
+
+        lv_obj_t *ui_LabelTime = (lv_obj_t *) timer->user_data;
+        lv_label_set_text_fmt(ui_LabelTime, "%s", timeClient.getFormattedTime());
+
+        lv_port_unlock();
+    }
+}
+
+void WifiCalendar_run_cb(lv_timer_t *timer)
+{
+    if(WifiConnected_Flag == true) {
+        lv_port_lock(0);
+
+        lv_obj_t *ui_Labelcalendar = (lv_obj_t *) timer->user_data;
+        lv_label_set_text_fmt(ui_Labelcalendar, "%s", dateString);
+
+        lv_port_unlock();
+    }
+}
+
+void WifiWeek_run_cb(lv_timer_t *timer)
+{
+    if(WifiConnected_Flag == true) {
+        String wk[7] = {"日","一","二","三","四","五","六"};
+        String s = "星期" + wk[timeClient.getDay()];
+
+        lv_port_lock(0);
+
+        lv_obj_t *ui_LabelWeek = (lv_obj_t *) timer->user_data;
+        lv_label_set_text_fmt(ui_LabelWeek, "%s", s);
+
+        lv_port_unlock();
+    }
+}
+
+void WifiWeather_run_cb(lv_timer_t *timer)
+{
+    if(WifiConnected_Flag == true) {
+        lv_port_lock(0);
+        
+        lv_obj_t *ui_Labelweather = (lv_obj_t *) timer->user_data;
+        PreWeather = Weather;
+        lv_label_set_text_fmt(ui_Labelweather, "%s", Weather);
+        if(PreWeather != Weather) {
+            if(Weather == "晴") {
+                _ui_flag_modify(ui_ImageCloudy, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
+                _ui_flag_modify(ui_ImageRain, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
+                _ui_flag_modify(ui_ImageSnow, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
+                _ui_flag_modify(ui_ImageSunny, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_REMOVE);
+            } else if(Weather == "阴" || Weather == "多云") {
+                _ui_flag_modify(ui_ImageCloudy, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_REMOVE);
+                _ui_flag_modify(ui_ImageRain, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
+                _ui_flag_modify(ui_ImageSnow, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
+                _ui_flag_modify(ui_ImageSunny, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);                
+            } else if(Weather == "小雨" || Weather == "中雨" || Weather == "大雨" || Weather == "暴雨") {
+                _ui_flag_modify(ui_ImageCloudy, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
+                _ui_flag_modify(ui_ImageRain, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_REMOVE);
+                _ui_flag_modify(ui_ImageSnow, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
+                _ui_flag_modify(ui_ImageSunny, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);  
+            }
+            else {
+                _ui_flag_modify(ui_ImageCloudy, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
+                _ui_flag_modify(ui_ImageRain, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
+                _ui_flag_modify(ui_ImageSnow, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_REMOVE);
+                _ui_flag_modify(ui_ImageSunny, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD); 
+            }
+        }
+        lv_port_unlock();
+    }
+}
+
+void WifiTemperature_run_cb(lv_timer_t *timer)
+{
+    if(WifiConnected_Flag == true) {
+        lv_port_lock(0);
+
+        lv_obj_t *ui_Labeltemperature = (lv_obj_t *) timer->user_data;
+        sprintf(temperature_buffer, "%d℃", temperature);
+        lv_label_set_text_fmt(ui_Labeltemperature, "%s", temperature_buffer);
+
+        lv_port_unlock();
+    }
+}
+
+void WifiListClicked_cb(lv_event_t * e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    lv_obj_t * target = lv_event_get_target(e);
+    
+    if (event_code == LV_EVENT_CLICKED) {
+        lv_port_lock(0);
+        
+        WifiList_switch = false;
+        Serial.println("WifiList_switch: false");
+
+        SelectedWifiName = lv_list_get_btn_text(Wifi_List, target);
+        if (SelectedWifiName != NULL) {
+            Serial.printf("%s\n", SelectedWifiName);
+        }
+
+        _ui_screen_change(&ui_ScreenPassord, LV_SCR_LOAD_ANIM_NONE, 0, 0, &ui_ScreenPassord_screen_init);
+        
+        lv_port_unlock();
+    }
+}
+
+void keyboard_event_cb(lv_event_t *e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    lv_obj_t * target = lv_event_get_target(e);
+
+    if(event_code == LV_EVENT_CLICKED && lv_keyboard_get_selected_btn(target) == 39) {
+        WifiPassword = lv_textarea_get_text(ui_TextPassword);
+        Serial.printf("%s\n", WifiPassword);
+
+        WiFi.begin(SelectedWifiName, WifiPassword);
+
+        Passwordvalid_flag = true;
+
+        _ui_flag_modify(ui_SpinnerLoadPassword, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_REMOVE);
+    }
+}
+
+void Ala_confirm_cb(lv_event_t * e)
+{
+    lv_roller_get_selected_str(ui_Rollerhour, hours_rol, sizeof(hours_rol));
+    lv_roller_get_selected_str(ui_Rollerminute, min_rol, sizeof(hours_rol));
+    lv_roller_get_selected_str(ui_Rollersecond, sec_rol, sizeof(min_rol));
+
+    strcpy(AlarmTime, hours_rol); 
+    strcat(AlarmTime, ":"); 
+    strcat(AlarmTime, min_rol); 
+    strcat(AlarmTime, ":"); 
+    strcat(AlarmTime, sec_rol); 
+    Serial.printf("AlarmTime: %s\n", AlarmTime);
+
+
+    _ui_screen_change(&ui_ScreenClock, LV_SCR_LOAD_ANIM_NONE, 0, 0, &ui_ScreenClock_screen_init);
+}
+
 void setup()
 {
-    Serial.begin(115200); /* prepare for possible serial debug */
+    Serial.begin(115200); /* prepare for possible serial debug */ 
 
-    String LVGL_Arduino = "Hello LVGL! ";
-    LVGL_Arduino += String('V') + lv_version_major() + "." + lv_version_minor() + "." + lv_version_patch();
-
-    Serial.println(LVGL_Arduino);
-    Serial.println("I am ESP32_Display_Panel");
+    WeatherRefresh_Count = 12;
 
     panel = new ESP_Panel();
 
@@ -267,35 +384,15 @@ void setup()
     /* Create a task to run the LVGL task periodically */
     lvgl_mux = xSemaphoreCreateRecursiveMutex();
     xTaskCreate(lvgl_task, "lvgl", 8192, NULL, 1, NULL);
-
+    
     /**
      * To avoid errors caused by multiple tasks simultaneously accessing LVGL,
      * should acquire a lock before operating on LVGL.
      */
     lv_port_lock(0);
 
-    /* Create simple label */
-    lv_obj_t *label = lv_label_create(lv_scr_act());
-    lv_label_set_text(label, LVGL_Arduino.c_str());
-    lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
+    ui_init();
 
-    /**
-     * Try an example. Don't forget to uncomment header.
-     * See all the examples online: https://docs.lvgl.io/master/examples.html
-     * source codes: https://github.com/lvgl/lvgl/tree/e7f88efa5853128bf871dde335c0ca8da9eb7731/examples
-     */
-    //  lv_example_btn_1();
-
-     /**
-      * Or try out a demo.
-      * Don't forget to uncomment header and enable the demos in `lv_conf.h`. E.g. `LV_USE_DEMOS_WIDGETS`
-      */
-    // lv_demo_widgets();
-    // lv_demo_benchmark();
-    // lv_demo_music();
-    // lv_demo_stress();
-
-    /* Release the lock */
     lv_port_unlock();
 
     Serial.println("Setup done");
@@ -303,6 +400,96 @@ void setup()
 
 void loop()
 {
-    Serial.println("Loop");
-    sleep(1);
+    if(WifiList_switch == true) {
+        Num_Wifi = WiFi.scanNetworks();
+        Serial.println("Scan done");
+
+        if(Num_Wifi == 0) {
+            Serial.println("no networks found");
+        } else if(WifiList_switch == true) {
+            WifiList_switch = false;
+            Serial.println("WifiList_switch: false");
+
+            Serial.println("Wifi list show:");
+
+            _ui_flag_modify(ui_SpinnerLoadWifi, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
+        
+            lv_port_lock(0);
+
+            Wifi_List = lv_list_create(lv_scr_act());
+            lv_obj_set_size(Wifi_List, 250, 200);
+            for (int i = 0; i < Num_Wifi; i++) {
+                lv_obj_t *Wifi_List_Item = lv_list_add_btn(Wifi_List, NULL, WiFi.SSID(i).c_str());
+                lv_obj_set_user_data(Wifi_List_Item, (void *)WiFi.SSID(i).c_str());
+                lv_obj_add_event_cb(Wifi_List_Item, WifiListClicked_cb, LV_EVENT_ALL, NULL);
+            }
+            lv_obj_align(Wifi_List, LV_ALIGN_CENTER, 0, 20);
+
+            lv_port_unlock();
+        }
+        WiFi.scanDelete();
+    }
+
+    if(Passwordvalid_flag == true) {
+        Serial.println("Wifi connecting...");
+        Serial.printf("%s ",  SelectedWifiName);
+        Serial.printf("%s\n", WifiPassword);
+        Connected_Count++;
+
+        lv_port_lock(0);
+
+        if (WiFi.status() == WL_CONNECTED) {
+            lv_textarea_set_text(ui_TextPassword, "");
+            Serial.println("password correct: Wifi connected success");
+
+            WeatherURL = GitURL(API, CITY);
+
+            WifiConnected_Flag = true;
+            Passwordvalid_flag = false;
+            Serial.println("WifiConnected_Flag: true");
+            Serial.println("Passwordvalid_flag: false");
+
+            _ui_flag_modify(ui_SpinnerLoadPassword, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
+            _ui_screen_change(&ui_ScreenClock, LV_SCR_LOAD_ANIM_NONE, 0, 0, &ui_ScreenClock_screen_init);
+        } else if(Connected_Count >= 2) {
+            lv_textarea_set_text(ui_TextPassword, "");
+            Serial.println("password wrong: Wifi connected failed");
+            
+            WifiConnected_Flag = false;
+            Passwordvalid_flag = false;
+            Serial.println("WifiConnected_Flag: false");
+            Serial.println("Passwordvalid_flag: false");
+            
+            Connected_Count = 0;
+            
+            _ui_flag_modify(ui_SpinnerLoadPassword, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
+        }
+
+        
+        
+        lv_port_unlock();
+    }
+
+    if(WifiConnected_Flag == true) {
+        timeClient.update();
+        unsigned long epochTime = timeClient.getEpochTime();
+        struct tm *ptm = gmtime((time_t *)&epochTime);
+        snprintf(dateString, sizeof(dateString), "%04d-%02d-%02d", ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday);
+        
+        Serial.print("Now time: ");
+        Serial.println(timeClient.getFormattedTime());
+        Serial.print("Current date: ");
+        Serial.println(dateString);
+        Serial.print("Current day of the week: ");
+        Serial.println(timeClient.getDay());
+
+        WeatherRefresh_Count++;
+
+        if(WeatherRefresh_Count >= 12) {
+            WeatherRefresh_Count = 0;
+            ParseWeather(WeatherURL);
+        }
+    }
+
+    delay(5000);
 }
