@@ -8,16 +8,21 @@
 #include <ui.h>
 #include <ArduinoJson.h>
 #include <HTTPClient.h>
+#include <ArduinoNvs.h>
 #include "../../ui/src/ui_events.h"
 
 
 #define LV_BUF_SIZE     (ESP_PANEL_LCD_H_RES * 20)
+
+static bool NVS_OK = false;
 
 ESP_Panel *panel = NULL;
 SemaphoreHandle_t lvgl_mux = NULL;                  // LVGL mutex
 
 extern bool WifiConnected_Flag;
 extern bool WifiList_switch;
+
+static bool NVS_Flag = false;
 
 static char hours_rol[10];
 static char min_rol[10];
@@ -32,6 +37,9 @@ static int WeatherRefresh_Count = 0;
 
 static const char *SelectedWifiName = NULL;
 static const char *WifiPassword = NULL;
+
+String st_WifiName;
+String st_WifiPassWord;
 
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "ntp6.aliyun.com", 28800, 60000);
@@ -200,7 +208,6 @@ void WifiWeather_run_cb(lv_timer_t *timer)
         lv_port_lock(0);
         
         lv_obj_t *ui_Labelweather = (lv_obj_t *) timer->user_data;
-        PreWeather = Weather;
         lv_label_set_text_fmt(ui_Labelweather, "%s", Weather);
         if(PreWeather != Weather) {
             if(Weather == "晴") {
@@ -226,6 +233,7 @@ void WifiWeather_run_cb(lv_timer_t *timer)
                 _ui_flag_modify(ui_ImageSunny, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD); 
             }
         }
+        PreWeather = Weather;
         lv_port_unlock();
     }
 }
@@ -302,8 +310,11 @@ void Ala_confirm_cb(lv_event_t * e)
 void setup()
 {
     Serial.begin(115200); /* prepare for possible serial debug */ 
+    NVS.begin();
+    NVS_Flag = false;
 
     WeatherRefresh_Count = 12;
+    PreWeather = "晴";
 
     panel = new ESP_Panel();
 
@@ -389,6 +400,7 @@ void setup()
      * To avoid errors caused by multiple tasks simultaneously accessing LVGL,
      * should acquire a lock before operating on LVGL.
      */
+
     lv_port_lock(0);
 
     ui_init();
@@ -400,6 +412,32 @@ void setup()
 
 void loop()
 {
+    if(NVS_Flag == false) {
+        if(NVS.getInt("NVS_WifiFg") == 1) {
+            st_WifiName = NVS.getString("NVS_WifiNa");
+            st_WifiPassWord = NVS.getString("NVS_WifiPw");
+            
+            SelectedWifiName = st_WifiName.c_str();
+            WifiPassword = st_WifiPassWord.c_str();
+
+            Serial.printf("NVS: SelectedWifiName: %s\n", SelectedWifiName);
+            Serial.printf("NVS: WifiPassword: %s\n", WifiPassword);
+            
+            WiFi.begin(SelectedWifiName, WifiPassword);
+            while(WiFi.status() != WL_CONNECTED) {
+                Serial.println("Wifi connecting...");
+                Serial.printf("NVS: SelectedWifiName: %s\n", SelectedWifiName);
+                Serial.printf("NVS: WifiPassword: %s\n", WifiPassword);
+                delay(1000);
+            }
+            WeatherURL = GitURL(API, CITY);
+            WifiConnected_Flag = true;
+        } else {
+            WifiConnected_Flag = false;
+        }
+        NVS_Flag = true;
+    }
+
     if(WifiList_switch == true) {
         Num_Wifi = WiFi.scanNetworks();
         Serial.println("Scan done");
@@ -444,7 +482,25 @@ void loop()
 
             WeatherURL = GitURL(API, CITY);
 
+            NVS_OK = NVS.setString("NVS_WifiNa", String(SelectedWifiName), 1);
+            if(NVS_OK == false) {
+                Serial.println("NVS_OK: false 1.NVS_WifiName");
+            }
+            Serial.printf("NVS_WifiNa:%s\n", String(SelectedWifiName));
+            
+            NVS_OK = NVS.setString("NVS_WifiPw", String(WifiPassword), 1);
+            if(NVS_OK == false) {
+                Serial.println("NVS_OK: false 2.NVS_WifiPassword");
+            }
+            Serial.printf("NVS_WifiPw:%s\n", String(WifiPassword));
+
             WifiConnected_Flag = true;
+            NVS_OK = NVS.setInt("NVS_WifiFg", WifiConnected_Flag, 1);
+            if(NVS_OK == false) {
+                Serial.println("NVS_OK: false 3.NVS_WifiConnected_Flag");
+            }
+            Serial.printf("NVS_WifiFg:%d\n", WifiConnected_Flag);
+
             Passwordvalid_flag = false;
             Serial.println("WifiConnected_Flag: true");
             Serial.println("Passwordvalid_flag: false");
@@ -456,6 +512,8 @@ void loop()
             Serial.println("password wrong: Wifi connected failed");
             
             WifiConnected_Flag = false;
+            NVS_OK = NVS.setInt("NVS_WifiFg", WifiConnected_Flag, 1);
+
             Passwordvalid_flag = false;
             Serial.println("WifiConnected_Flag: false");
             Serial.println("Passwordvalid_flag: false");
@@ -465,7 +523,6 @@ void loop()
             _ui_flag_modify(ui_SpinnerLoadPassword, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
         }
 
-        
         
         lv_port_unlock();
     }
