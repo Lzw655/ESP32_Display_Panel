@@ -24,15 +24,21 @@
         .master = {                                             \
             .clk_speed = 400000,                                \
         },                                                      \
+        .clk_flags = I2C_SCLK_SRC_FLAG_FOR_NOMAL,               \
     }
 #define I2C_PANEL_IO_CONFIG_DEFAULT(address)                    \
     {                                                           \
         .dev_addr = address,                                    \
         .on_color_trans_done = (esp_lcd_panel_io_color_trans_done_cb_t)callback, \
+        .user_ctx = NULL,                                       \
         .control_phase_bytes = 1,                               \
         .dc_bit_offset = 6,                                     \
         .lcd_cmd_bits = 8,                                      \
         .lcd_param_bits = 8,                                    \
+        .flags = {                                              \
+            .dc_low_on_data = 0,                                \
+            .disable_control_phase = 0,                         \
+        },                                                      \
     }
 
 class ESP_PanelBus_I2C: public ESP_PanelBus {

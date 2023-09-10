@@ -13,6 +13,10 @@
         .reset_gpio_num = -1,                   \
         .color_space = ESP_LCD_COLOR_SPACE_RGB, \
         .bits_per_pixel = 16,                   \
+        .flags = {                              \
+            .reset_active_high = 0,             \
+        },                                      \
+        .vendor_config = NULL,                  \
     }
 #define LCD_CONFIG_DEFAULT()                        \
     {                                               \

@@ -23,6 +23,7 @@
 #elif CONFIG_IDF_TARGET_ESP32C3
 #define SPI_MAX_TRANSFER_SIZE   ((1 << 18) >> 3)
 #endif
+#include "esp_intr_alloc.h"
 
 #define SPI_HOST_ID_DEFAULT         (SPI2_HOST)
 #define SPI_HOST_CONFIG_DEFAULT(clk, mosi, miso)                \
@@ -30,9 +31,15 @@
         .mosi_io_num = mosi,                                    \
         .miso_io_num = miso,                                    \
         .sclk_io_num = clk,                                     \
-        .quadwp_io_num = GPIO_NUM_NC,                           \
-        .quadhd_io_num = GPIO_NUM_NC,                           \
+        .quadwp_io_num = -1,                                    \
+        .quadhd_io_num = -1,                                    \
+        .data4_io_num = -1,                                     \
+        .data5_io_num = -1,                                     \
+        .data6_io_num = -1,                                     \
+        .data7_io_num = -1,                                     \
         .max_transfer_sz = SPI_MAX_TRANSFER_SIZE,               \
+        .flags = SPICOMMON_BUSFLAG_MASTER,                      \
+        .intr_flags = 0,                                        \
     }
 #define SPI_PANEL_IO_CONFIG_DEFAULT(cs, dc, cb, cb_ctx)         \
     {                                                           \
@@ -45,6 +52,12 @@
         .user_ctx = cb_ctx,                                     \
         .lcd_cmd_bits = 8,                                      \
         .lcd_param_bits = 8,                                    \
+        .flags = {                                              \
+            .dc_as_cmd_phase = 0,                               \
+            .dc_low_on_data = 0,                                \
+            .octal_mode = 0,                                    \
+            .lsb_first = 0,                                     \
+        },                                                      \
     }
 
 class ESP_PanelBus_SPI: public ESP_PanelBus {

@@ -60,7 +60,13 @@ void ESP_Panel::init(void)
         .sclk_io_num = ESP_PANEL_LCD_SPI_IO_SCK,
         .quadwp_io_num = GPIO_NUM_NC,
         .quadhd_io_num = GPIO_NUM_NC,
+        .data4_io_num = GPIO_NUM_NC,
+        .data5_io_num = GPIO_NUM_NC,
+        .data6_io_num = GPIO_NUM_NC,
+        .data7_io_num = GPIO_NUM_NC,
         .max_transfer_sz = SPI_MAX_TRANSFER_SIZE,
+        .flags = SPICOMMON_BUSFLAG_MASTER,
+        .intr_flags = 0,
     };
 #endif /* ESP_PANEL_LCD_BUS_SKIP_INIT_HOST */
     esp_lcd_panel_io_spi_config_t lcd_panel_io_cfg = {
@@ -70,8 +76,15 @@ void ESP_Panel::init(void)
         .pclk_hz = ESP_PANEL_LCD_SPI_CLK_HZ,
         .trans_queue_depth = ESP_PANEL_LCD_SPI_TRANS_QUEUE_SZ,
         .on_color_trans_done = NULL,
+        .user_ctx = NULL,
         .lcd_cmd_bits = ESP_PANEL_LCD_SPI_CMD_BITS,
         .lcd_param_bits = ESP_PANEL_LCD_SPI_PARAM_BITS,
+        .flags = {
+            .dc_as_cmd_phase = 0,
+            .dc_low_on_data = 0,
+            .octal_mode = 0,
+            .lsb_first = 0,
+        },
     };
 #elif ESP_PANEL_LCD_BUS_TYPE == ESP_PANEL_BUS_TYPE_I80
 #error "This function is not implemented and will be implemented in the future."
@@ -154,6 +167,7 @@ void ESP_Panel::init(void)
             .flags = {
                 .reset_active_high = ESP_PANEL_LCD_RST_LEVEL,
             },
+            .vendor_config = NULL,
         },
     };
 #endif /* ESP_PANEL_USE_LCD */
@@ -170,6 +184,7 @@ void ESP_Panel::init(void)
         .master = {
             .clk_speed = ESP_PANEL_LCD_TOUCH_I2C_CLK_HZ,
         },
+        .clk_flags = I2C_SCLK_SRC_FLAG_FOR_NOMAL,
     };
 #endif /* ESP_PANEL_LCD_TOUCH_BUS_SKIP_INIT_HOST */
     esp_lcd_panel_io_i2c_config_t lcd_touch_panel_io_cfg = LCD_TOUCH_PANEL_IO_I2C_CONFIG(ESP_PANEL_LCD_TOUCH_NAME);

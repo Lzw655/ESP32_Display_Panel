@@ -102,7 +102,7 @@
 #include <ESP_IOExpander_Library.h>
 
 /**
-/* To use the built-in examples and demos of LVGL uncomment the includes below respectively.
+ * To use the built-in examples and demos of LVGL uncomment the includes below respectively.
  * You also need to copy `lvgl/examples` to `lvgl/src/examples`. Similarly for the demos `lvgl/demos` to `lvgl/src/demos`.
  */
 // #include <demos/lv_demos.h>
@@ -148,7 +148,7 @@ void my_touchpad_read(lv_indev_drv_t * indev, lv_indev_data_t * data)
         TouchPoint point = panel->getLcdTouch()->getPoint();
 
         data->state = LV_INDEV_STATE_PR;
-        /*Set the coordinates*/
+        /* Set the coordinates */
         data->point.x = point.x;
         data->point.y = point.y;
 

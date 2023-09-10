@@ -64,7 +64,10 @@ static esp_err_t lcd_new_panel_st7789(const esp_lcd_panel_io_handle_t io, const 
     st7789_panel_t *st7789 = NULL;
     gpio_config_t io_conf = {
         .pin_bit_mask = 1ULL << panel_dev_config->reset_gpio_num,
-                             .mode = GPIO_MODE_OUTPUT,
+        .mode = GPIO_MODE_OUTPUT,
+        .pull_up_en = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type = GPIO_INTR_DISABLE,
     };
     uint8_t fb_bits_per_pixel = 0;
 
@@ -210,16 +213,16 @@ static esp_err_t panel_st7789_draw_bitmap(esp_lcd_panel_t *panel, int x_start, i
     y_end += st7789->y_gap;
 
     uint8_t x_coord[] = {
-        (x_start >> 8) & 0xFF,
-        x_start & 0xFF,
-        ((x_end - 1) >> 8) & 0xFF,
-        (x_end - 1) & 0xFF,
+        (uint8_t)(x_start >> 8) & 0xFF,
+        (uint8_t)x_start & 0xFF,
+        (uint8_t)((x_end - 1) >> 8) & 0xFF,
+        (uint8_t)(x_end - 1) & 0xFF,
     };
     uint8_t y_coord[] = {
-        (y_start >> 8) & 0xFF,
-        y_start & 0xFF,
-        ((y_end - 1) >> 8) & 0xFF,
-        (y_end - 1) & 0xFF,
+        (uint8_t)(y_start >> 8) & 0xFF,
+        (uint8_t)y_start & 0xFF,
+        (uint8_t)((y_end - 1) >> 8) & 0xFF,
+        (uint8_t)(y_end - 1) & 0xFF,
     };
     // define an area of frame memory where MCU can access
     esp_lcd_panel_io_tx_param(io, LCD_CMD_CASET, x_coord, 4);

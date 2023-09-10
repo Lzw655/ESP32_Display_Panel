@@ -30,7 +30,11 @@
         .vsync_back_porch = 10,                             \
         .vsync_front_porch = 10,                            \
         .flags = {                                          \
-            .pclk_active_neg = false,                       \
+            .hsync_idle_low = 0,                            \
+            .vsync_idle_low = 0,                            \
+            .de_idle_high = 0,                              \
+            .pclk_active_neg = 0,                           \
+            .pclk_idle_high = 0,                            \
         },                                                  \
     }
 #define RGB_HOST_CONFIG_DEFAULT(width, height, hsync, vsync, pclk, D0, D1, D2, D3, D4, D5, \
@@ -39,6 +43,7 @@
         .clk_src = LCD_CLK_SRC_PLL160M,                                                 \
         .timings = RGB_TIMING_CONFIG_DEFAULT(width, height),                            \
         .data_width = 16,                                                               \
+        .sram_trans_align = 4,                                                          \
         .psram_trans_align = 64,                                                        \
         .hsync_gpio_num = hsync,                                                        \
         .vsync_gpio_num = vsync,                                                        \
@@ -49,27 +54,34 @@
         },                                                                              \
         .disp_gpio_num = disp,                                                          \
         .on_frame_trans_done = (esp_lcd_rgb_panel_frame_trans_done_cb_t)callback,       \
+        .user_ctx = NULL,                                                               \
         .flags = {                                                                      \
+            .disp_active_low = 0,                                                       \
+            .relax_on_idle = 0,                                                         \
             .fb_in_psram = 1,                                                           \
         },                                                                              \
     }
 #define RGB_PANEL_IO_CONFIG_DEFAULT(cs, sck, sda)           \
     {                                                       \
-        .line_config = {                 \
+        .line_config = {                                    \
             .cs_io_type = IO_TYPE_GPIO,                     \
             .cs_gpio_num = cs,                              \
             .scl_io_type = IO_TYPE_GPIO,                    \
             .scl_gpio_num = scl,                            \
             .sda_io_type = IO_TYPE_GPIO,                    \
             .sda_gpio_num = sda,                            \
+            .io_expander = NULL,                            \
         },                                                  \
         .expect_clk_speed = PANEL_IO_3WIRE_SPI_CLK_MAX,     \
         .spi_mode = 0,                                      \
         .lcd_cmd_bytes = 1,                                 \
         .lcd_param_bytes = 1,                               \
         .flags = {                                          \
-            .use_dc_bit = true,                             \
-            .del_keep_cs_inactive = true,                   \
+            .use_dc_bit = 1,                                \
+            .dc_zero_on_data = 0,                           \
+            .lsb_first = 0,                                 \
+            .cs_high_active = 0,                            \
+            .del_keep_cs_inactive = 1,                      \
         },                                                  \
     }
 
