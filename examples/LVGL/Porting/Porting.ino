@@ -33,6 +33,7 @@ static char AlarmTime[30];
 lv_obj_t * Wifi_List = NULL;
 
 static int Connected_Count = 0;
+static int NVS_WifiConnect_count = 0;
 static int WeatherRefresh_Count = 0;
 
 static const char *SelectedWifiName = NULL;
@@ -58,7 +59,8 @@ char temperature_buffer[20];
 static char dateString[20];
 static int Num_Wifi = 0;
 
-bool Passwordvalid_flag = false;
+static bool Passwordvalid_flag = false;
+static bool Alarm_flag = false;
 
 #if ESP_PANEL_LCD_BUS_TYPE == ESP_PANEL_BUS_TYPE_RGB
 /* Display flushing */
@@ -131,7 +133,7 @@ String GitURL(String api,String city)
   url_xinzhi += api;
   url_xinzhi += "&location=";
   url_xinzhi += city;
-  url_xinzhi += "&language=zh-Hans&unit=c";
+  url_xinzhi += "&language=en&unit=c";
   return url_xinzhi;
 }
 
@@ -142,17 +144,16 @@ void ParseWeather(String url)
   http.begin(url);
  
   int httpGet = http.GET();
-  if(httpGet > 0)
-  { 
+  if(httpGet > 0) { 
     if(httpGet == HTTP_CODE_OK) {
-      String json = http.getString();
-      deserializeJson(doc, json);
-      
-      Weather = doc["results"][0]["now"]["text"].as<String>();   //天气
-      temperature = doc["results"][0]["now"]["temperature"].as<int>();
-      
-      Serial.printf("Weather: %s\n", Weather);
-      Serial.printf("temperature: %d\n", temperature);
+        String json = http.getString();
+        deserializeJson(doc, json);
+
+        Weather = doc["results"][0]["now"]["text"].as<String>();   //天气
+        temperature = doc["results"][0]["now"]["temperature"].as<int>();
+
+        Serial.printf("Weather: %s\n", Weather);
+        Serial.printf("temperature: %d\n", temperature);
     } else {
       Serial.printf("ERROR: HTTP_CODE");
     }
@@ -166,61 +167,67 @@ void ParseWeather(String url)
 void WifiClock_run_cb(lv_timer_t *timer)
 {
     if(WifiConnected_Flag == true) {
-        lv_port_lock(0);
-
         lv_obj_t *ui_LabelTime = (lv_obj_t *) timer->user_data;
         lv_label_set_text_fmt(ui_LabelTime, "%s", timeClient.getFormattedTime());
-
-        lv_port_unlock();
+        
+        if(String(AlarmTime) == timeClient.getFormattedTime()) {
+            Alarm_flag = true;
+            Serial.println("Alarm_flag: true");
+        }
     }
 }
 
 void WifiCalendar_run_cb(lv_timer_t *timer)
 {
     if(WifiConnected_Flag == true) {
-        lv_port_lock(0);
-
         lv_obj_t *ui_Labelcalendar = (lv_obj_t *) timer->user_data;
         lv_label_set_text_fmt(ui_Labelcalendar, "%s", dateString);
-
-        lv_port_unlock();
     }
 }
 
 void WifiWeek_run_cb(lv_timer_t *timer)
 {
     if(WifiConnected_Flag == true) {
-        String wk[7] = {"日","一","二","三","四","五","六"};
-        String s = "星期" + wk[timeClient.getDay()];
+        String s;
 
-        lv_port_lock(0);
+        if (timeClient.getDay() == 0) {
+            s = "Sunday";
+        } else if (timeClient.getDay() == 1) {
+            s = "Monday";
+        } else if (timeClient.getDay() == 2) {
+            s = "Tuesday";
+        } else if (timeClient.getDay() == 3) {
+            s = "Wednesday";
+        } else if (timeClient.getDay() == 4) {
+            s = "Thursday";
+        } else if (timeClient.getDay() == 5) {
+            s = "Friday";
+        } else if (timeClient.getDay() == 6) {
+            s = "Saturday";
+        }
 
         lv_obj_t *ui_LabelWeek = (lv_obj_t *) timer->user_data;
         lv_label_set_text_fmt(ui_LabelWeek, "%s", s);
-
-        lv_port_unlock();
     }
 }
 
 void WifiWeather_run_cb(lv_timer_t *timer)
 {
     if(WifiConnected_Flag == true) {
-        lv_port_lock(0);
-        
         lv_obj_t *ui_Labelweather = (lv_obj_t *) timer->user_data;
         lv_label_set_text_fmt(ui_Labelweather, "%s", Weather);
         if(PreWeather != Weather) {
-            if(Weather == "晴") {
+            if(Weather == "Sunny" || Weather == "Clear") {
                 _ui_flag_modify(ui_ImageCloudy, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
                 _ui_flag_modify(ui_ImageRain, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
                 _ui_flag_modify(ui_ImageSnow, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
                 _ui_flag_modify(ui_ImageSunny, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_REMOVE);
-            } else if(Weather == "阴" || Weather == "多云") {
+            } else if(Weather == "Overcast" || Weather == "Cloudy") {
                 _ui_flag_modify(ui_ImageCloudy, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_REMOVE);
                 _ui_flag_modify(ui_ImageRain, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
                 _ui_flag_modify(ui_ImageSnow, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
                 _ui_flag_modify(ui_ImageSunny, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);                
-            } else if(Weather == "小雨" || Weather == "中雨" || Weather == "大雨" || Weather == "暴雨") {
+            } else if(Weather == "Light rain" || Weather == "Moderate rain" || Weather == "Heavy rain" || Weather == "Storm") {
                 _ui_flag_modify(ui_ImageCloudy, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
                 _ui_flag_modify(ui_ImageRain, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_REMOVE);
                 _ui_flag_modify(ui_ImageSnow, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
@@ -234,20 +241,15 @@ void WifiWeather_run_cb(lv_timer_t *timer)
             }
         }
         PreWeather = Weather;
-        lv_port_unlock();
     }
 }
 
 void WifiTemperature_run_cb(lv_timer_t *timer)
 {
     if(WifiConnected_Flag == true) {
-        lv_port_lock(0);
-
         lv_obj_t *ui_Labeltemperature = (lv_obj_t *) timer->user_data;
         sprintf(temperature_buffer, "%d℃", temperature);
         lv_label_set_text_fmt(ui_Labeltemperature, "%s", temperature_buffer);
-
-        lv_port_unlock();
     }
 }
 
@@ -312,14 +314,20 @@ void setup()
     Serial.begin(115200); /* prepare for possible serial debug */ 
     NVS.begin();
     NVS_Flag = false;
+    Serial.printf("NVS_Flag: false");
+    NVS_WifiConnect_count = 0;
 
-    WeatherRefresh_Count = 12;
-    PreWeather = "晴";
-
+    WiFi.mode(WIFI_STA);
+    WiFi.disconnect();
+    delay(100);
+    
     panel = new ESP_Panel();
 
     /* Initialize LVGL core */
     lv_init();
+    
+    WeatherRefresh_Count = 120;
+    PreWeather = "Sunny";  
 
     /* Initialize LVGL buffers */
     static lv_disp_draw_buf_t draw_buf;
@@ -413,7 +421,7 @@ void setup()
 void loop()
 {
     if(NVS_Flag == false) {
-        if(NVS.getInt("NVS_WifiFg") == 1) {
+        if(NVS.getInt("NVS_WifiFg") == true) {
             st_WifiName = NVS.getString("NVS_WifiNa");
             st_WifiPassWord = NVS.getString("NVS_WifiPw");
             
@@ -428,14 +436,33 @@ void loop()
                 Serial.println("Wifi connecting...");
                 Serial.printf("NVS: SelectedWifiName: %s\n", SelectedWifiName);
                 Serial.printf("NVS: WifiPassword: %s\n", WifiPassword);
+                if(WifiPassword[0] == '\0') {
+                    Serial.printf("NVS Read ERROR");
+                    break;
+                }
+                NVS_WifiConnect_count++;
+                if(NVS_WifiConnect_count >= 3) {
+                    NVS_WifiConnect_count = 0;
+                    Serial.printf("NVS Wifi Connecting Fail");
+                    WiFi.disconnect();
+                    break;
+                }
                 delay(1000);
             }
-            WeatherURL = GitURL(API, CITY);
-            WifiConnected_Flag = true;
+            if(WiFi.status() == WL_CONNECTED) {
+                Serial.printf("NVS Wifi Connecting Success");
+                WeatherURL = GitURL(API, CITY);
+                WifiConnected_Flag = true;
+                WeatherRefresh_Count = 120;
+                Serial.printf("WifiConnected_Flag: true");
+            }
+            NVS_WifiConnect_count = 0;
         } else {
             WifiConnected_Flag = false;
+            Serial.printf("WifiConnected_Flag: false");
         }
         NVS_Flag = true;
+        Serial.printf("NVS_Flag: true");
     }
 
     if(WifiList_switch == true) {
@@ -455,7 +482,7 @@ void loop()
             lv_port_lock(0);
 
             Wifi_List = lv_list_create(lv_scr_act());
-            lv_obj_set_size(Wifi_List, 250, 200);
+            lv_obj_set_size(Wifi_List, 300, 190);
             for (int i = 0; i < Num_Wifi; i++) {
                 lv_obj_t *Wifi_List_Item = lv_list_add_btn(Wifi_List, NULL, WiFi.SSID(i).c_str());
                 lv_obj_set_user_data(Wifi_List_Item, (void *)WiFi.SSID(i).c_str());
@@ -505,9 +532,11 @@ void loop()
             Serial.println("WifiConnected_Flag: true");
             Serial.println("Passwordvalid_flag: false");
 
+            Connected_Count = 0;
+
             _ui_flag_modify(ui_SpinnerLoadPassword, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
             _ui_screen_change(&ui_ScreenClock, LV_SCR_LOAD_ANIM_NONE, 0, 0, &ui_ScreenClock_screen_init);
-        } else if(Connected_Count >= 2) {
+        } else if(Connected_Count >= 10) {
             lv_textarea_set_text(ui_TextPassword, "");
             Serial.println("password wrong: Wifi connected failed");
             
@@ -522,8 +551,6 @@ void loop()
             
             _ui_flag_modify(ui_SpinnerLoadPassword, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
         }
-
-        
         lv_port_unlock();
     }
 
@@ -542,11 +569,22 @@ void loop()
 
         WeatherRefresh_Count++;
 
-        if(WeatherRefresh_Count >= 12) {
+        if(WeatherRefresh_Count >= 120) {
             WeatherRefresh_Count = 0;
             ParseWeather(WeatherURL);
         }
     }
 
-    delay(5000);
+    if(Alarm_flag == true) {
+        static const char * btns[] ={""};
+        lv_port_lock(0);
+        lv_obj_t* Alarm_mbox = lv_msgbox_create(NULL, "Alarm activated", "Click the button to turn off the alarm", btns, true);
+        lv_obj_center(Alarm_mbox);
+
+        Alarm_flag = false;
+        Serial.println("Alarm_flag: false");
+        lv_port_unlock();
+    }
+
+    delay(500);
 }
