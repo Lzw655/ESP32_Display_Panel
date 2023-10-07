@@ -1,5 +1,9 @@
 # ESP32_Display_Panel
 
+## !!!Notice!!!
+
+**This library has been archived. Please use the [official Espressif library](https://github.com/esp-arduino-libs/ESP32_Display_Panel) instead.**
+
 ESP32_Display_Panel is a versatile library designed to drive LCD and touch panels with ESP32. It is primarily developed for various [Espressif development boards](#supported-boards) or custom boards.
 
 ESP32_Display_Panel is based on [Arduino-ESP32](https://github.com/espressif/arduino-esp32) (or [ESP-IDF](https://github.com/espressif/esp-idf)) and [Espressif Components Registry](https://components.espressif.com/), with various components encapsulated using C++.
